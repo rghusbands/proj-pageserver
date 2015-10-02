@@ -66,16 +66,35 @@ def respond(sock):
     request = sock.recv(1024)  # We accept only short requests
     request = str(request, encoding='utf-8', errors='strict')
     print("\nRequest was {}\n".format(request))
-
+    
     parts = request.split()
+
     if len(parts) > 1 and parts[0] == "GET":
-        transmit("HTTP/1.0 200 OK\n\n", sock)
-        transmit(CAT, sock)
+        inputPlus = parts[1] #information with slash
+        input1 = inputPlus[1:] #remove slash
+        if input1.endswith(('.html','.css')):
+            if "~" in input1:
+                transmit("\nI don't handle this request. No ~ allowed: \n\n{}".format(request),sock)
+                quit()
+            if ".." in input1:
+                transmit("\nI don't handle this request. No .. allowed: \n\n{}".format(request),sock)
+                quit()
+            if "//" in input1:
+                transmit("\nI don't handle this request. No // allowed: \n\n{}".format(request),sock)
+                quit()
+            else:
+                try:
+                    openFile = open(input1, "r").read()
+                    transmit("HTTP/1.0 200 OK\n\n", sock)
+                    transmit(openFile, sock)
+                except:
+                    transmit("Error 404\nPage did not open\nI don't handle this request: {}\n".format(request), sock)
+        else:
+            transmit("Error 404\nMust be html or css\nI don't handle this request: {}\n".format(request),sock)
     else:
         transmit("\nI don't handle this request: {}\n".format(request), sock)
 
     sock.close()
-
     return
 
 def transmit(msg, sock):
